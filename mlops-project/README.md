@@ -2,6 +2,8 @@
 
 This repository contains a complete, runnable MLOps workflow for a customer churn classification use case. It covers model training, experiment tracking, model registry promotion, API serving, CI/CD automation, and drift monitoring in a single GitHub-ready project.
 
+For a concise presentation-ready overview, see [PROJECT_SUMMARY.md](/e:/mlops/mlops-project/PROJECT_SUMMARY.md).
+
 ## Use Case
 
 The project predicts whether a telecom customer is likely to churn using a realistic synthetic dataset with mixed feature types:
