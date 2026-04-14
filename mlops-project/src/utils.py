@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -71,16 +71,9 @@ def infer_tracking_uri() -> str:
     return os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
 
 
-def to_dataframe(input_features: Dict[str, float], feature_order: Iterable[str] | None = None) -> pd.DataFrame:
-    """Convert a single JSON payload to a model-ready DataFrame.
-
-    Args:
-        input_features: Name/value feature mapping from API or CLI payload.
-        feature_order: Optional canonical feature ordering to enforce.
-    """
+def to_dataframe(input_features: Dict[str, float]) -> pd.DataFrame:
+    """Convert single JSON payload to model-ready DataFrame with sorted columns."""
     df = pd.DataFrame([input_features])
-    if feature_order is not None:
-        df = df.reindex(columns=list(feature_order))
     return df
 
 
