@@ -18,7 +18,7 @@ def predict(payload: dict) -> dict:
     mlflow.set_tracking_uri(infer_tracking_uri())
     model = mlflow.pyfunc.load_model(f"models:/{MODEL_NAME}/Production")
 
-    df = to_dataframe(payload, feature_order=get_feature_template())
+    df = to_dataframe(payload)
     prediction = int(model.predict(df)[0])
     return {"prediction": prediction}
 

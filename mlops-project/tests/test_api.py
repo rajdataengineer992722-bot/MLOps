@@ -1,10 +1,4 @@
-import pytest
-
-pytest.importorskip("fastapi")
-pytest.importorskip("mlflow")
-
 from fastapi.testclient import TestClient
-from mlflow.exceptions import MlflowException
 
 from api.app import EXPECTED_FEATURES, app
 
@@ -40,16 +34,3 @@ def test_predict_validation(monkeypatch):
     response = client.post("/predict", json={"features": {"bad_feature": 1.0}})
     assert response.status_code == 422
     assert "missing_features" in response.json()["detail"]
-
-
-def test_predict_returns_503_when_model_unavailable(monkeypatch):
-    def _missing_model():
-        raise MlflowException("not found")
-
-    monkeypatch.setattr("api.app.load_model", _missing_model)
-    client = TestClient(app)
-
-    payload = {"features": {feature: 0.1 for feature in EXPECTED_FEATURES}}
-    response = client.post("/predict", json=payload)
-
-    assert response.status_code == 503

@@ -8,7 +8,6 @@ from typing import Dict
 
 import mlflow
 from fastapi import FastAPI, HTTPException
-from mlflow.exceptions import MlflowException
 from pydantic import BaseModel, Field
 
 from src.utils import configure_logging, get_feature_template, infer_tracking_uri, to_dataframe
@@ -32,12 +31,7 @@ def load_model():
 @app.on_event("startup")
 def startup_event() -> None:
     configure_logging(os.getenv("LOG_LEVEL", "INFO"))
-    # Warmup is best-effort so the service can still expose /health
-    # even if a production model has not been promoted yet.
-    try:
-        load_model()
-    except MlflowException:
-        pass
+    load_model()
 
 
 @app.get("/health")
@@ -57,14 +51,7 @@ def predict(request: PredictRequest) -> dict:
             detail={"missing_features": missing, "extra_features": extra},
         )
 
-    dataframe = to_dataframe(received_features, feature_order=EXPECTED_FEATURES)
-    try:
-        model = load_model()
-    except MlflowException as exc:
-        raise HTTPException(
-            status_code=503,
-            detail="Production model is unavailable. Train and promote a model first.",
-        ) from exc
-
+    dataframe = to_dataframe(received_features)
+    model = load_model()
     pred = int(model.predict(dataframe)[0])
     return {"prediction": pred, "model_name": MODEL_NAME}

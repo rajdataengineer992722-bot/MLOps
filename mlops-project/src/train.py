@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import logging
 import os
-import time
 
 import mlflow
 import mlflow.sklearn
 from mlflow.exceptions import MlflowException
 from mlflow.tracking import MlflowClient
-from mlflow.entities.model_registry.model_version_status import ModelVersionStatus
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from sklearn.pipeline import Pipeline
@@ -77,7 +75,6 @@ def register_and_promote_model(model_uri: str, model_name: str) -> None:
         client.create_registered_model(model_name)
 
     registered = mlflow.register_model(model_uri=model_uri, name=model_name)
-    registered = wait_for_model_version_ready(client, model_name, registered.version)
 
     client.transition_model_version_stage(
         name=model_name,
@@ -87,19 +84,6 @@ def register_and_promote_model(model_uri: str, model_name: str) -> None:
     )
 
     logger.info("Model %s version %s moved to Production", model_name, registered.version)
-
-
-def wait_for_model_version_ready(
-    client: MlflowClient, model_name: str, version: str, timeout_seconds: int = 60
-):
-    """Wait until a newly registered model version is READY before stage transition."""
-    deadline = time.time() + timeout_seconds
-    while time.time() < deadline:
-        model_version = client.get_model_version(name=model_name, version=version)
-        if model_version.status == ModelVersionStatus.READY:
-            return model_version
-        time.sleep(1)
-    raise TimeoutError(f"Model version {model_name} v{version} was not READY within {timeout_seconds}s")
 
 
 if __name__ == "__main__":

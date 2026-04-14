@@ -128,7 +128,6 @@ This will:
 - Train model
 - Log params + metrics to MLflow
 - Register model and transition latest version to **Production**
-- Wait for model version to become READY before stage transition
 
 ### Step C: Evaluate
 
@@ -191,5 +190,5 @@ To make deployment fully real, replace mock steps with your registry/Kubernetes/
 - Environment-driven config (`.env.example`)
 - Registry stage promotion to Production
 - API schema validation and strict feature checks
-- Graceful `503` response when no Production model is available
 - Automated testing and CI pipeline
+
