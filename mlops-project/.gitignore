@@ -1,7 +1,10 @@
 __pycache__/
 *.pyc
+*.log
 .venv/
+.pytest_cache/
 .env
 mlruns/
+mlflow/
 mlflow.db
 reports/

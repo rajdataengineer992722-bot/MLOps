@@ -6,11 +6,16 @@ on:
   pull_request:
 
 jobs:
-  build-test-train:
+  test-train-build-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mlops-project
     env:
+      PYTHONPATH: .
       MLFLOW_TRACKING_URI: sqlite:///mlflow.db
-      MODEL_NAME: breast-cancer-classifier
+      MODEL_NAME: customer-churn-classifier
+      LOG_LEVEL: INFO
 
     steps:
       - name: Checkout
@@ -24,28 +29,29 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r mlops-project/requirements.txt
+          pip install -r requirements.txt
 
       - name: Run unit tests
-        run: pytest mlops-project/tests -q
+        run: pytest tests -q
 
       - name: Train and register model
-        run: |
-          export PYTHONPATH=mlops-project
-          python mlops-project/src/train.py
+        run: python src/train.py
+
+      - name: Evaluate production model
+        run: python src/evaluate.py
 
       - name: Generate drift report
-        run: |
-          export PYTHONPATH=mlops-project
-          python mlops-project/monitoring/drift.py --output-dir mlops-project/reports/drift
+        run: python monitoring/drift.py --output-dir reports/drift
 
       - name: Build Docker image
-        run: docker build -t mlops-api:latest mlops-project
+        run: docker build -t customer-churn-api:latest .
 
       - name: Push image (mock)
-        run: |
-          echo "Mock push step - tag and push to registry in real environment"
+        run: echo "Mock push step. Replace with docker login and docker push in your target registry."
 
-      - name: Deploy API (mock)
+      - name: Deploy API locally for smoke test
         run: |
-          echo "Mock deploy step - replace with kubectl/terraform/ecs deploy commands"
+          docker run -d --name churn-api-smoke -p 8000:8000 -e MLFLOW_TRACKING_URI=sqlite:////app/mlflow.db customer-churn-api:latest
+          sleep 15
+          curl --fail http://127.0.0.1:8000/health
+          docker stop churn-api-smoke
