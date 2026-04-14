@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  mlflow:
+    image: python:3.11-slim
+    working_dir: /mlflow
+    volumes:
+      - ./:/mlflow
+    command: >
+      bash -c "pip install --no-cache-dir mlflow==2.14.3 &&
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root ./mlruns"
+    ports:
+      - "5000:5000"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MODEL_NAME=breast-cancer-classifier
+      - LOG_LEVEL=INFO
+    depends_on:
+      - mlflow
+    ports:
+      - "8000:8000"
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: streamlit run streamlit/dashboard.py --server.port=8501 --server.address=0.0.0.0
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MODEL_NAME=breast-cancer-classifier
+    depends_on:
+      - mlflow
+    ports:
+      - "8501:8501"
